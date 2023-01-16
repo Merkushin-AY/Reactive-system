@@ -1,25 +1,25 @@
 export default class Computed {
     _value;
     getter;
-    deprecated = false;
+    isReady = false;
+    isDeprecated = true;
 
-    applyGetter(getter) {
+    constructor(getter) {
         this.getter = getter;
-        this.compute();
     }
 
     compute() {
         this.value = this.getter();
-        this.deprecated = false;
+        this.isDeprecated = false;
         return this.value;
     }
 
     deprecate() {
-        this.deprecated = true;
+        this.isDeprecated = true;
     }
 
     get value() {
-        if (this.deprecated) return this.compute(); // computed are lazy all time except first initialization
+        if (this.isDeprecated) return this.compute();
         return this._value;
     }
 

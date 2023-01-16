@@ -6,12 +6,7 @@ export default class ReactiveSystem {
     computing = [];
 
     computed(getter) {
-        const computed = new Computed();
-        this.computing.push(computed);
-        computed.applyGetter(getter);
-        const proxiedComputed = this.proxy(computed);
-        this.computing.pop();
-        return proxiedComputed;
+        return this.proxy(new Computed(getter));
     }
 
     ref(value) {
@@ -22,12 +17,25 @@ export default class ReactiveSystem {
         return this.proxy(objectValue);
     }
 
+    isComputed(ref) {
+        return ref instanceof Computed;
+    }
+
     proxy(ref) {
         const rs = this;
         return new Proxy(ref, {
-            get(target) {
+            get(target, prop) {
                  // if something is computing now, then this target is dependency (Moment when I am glad js is single threaded)
                 if (rs.computing.length) rs.addDependency(target);
+
+                if (rs.isComputed(target) && !target.isReady) {
+                    rs.computing.push(target);
+                    const value = target[prop];
+                    rs.computing.pop();
+                    target.isReady = true;
+                    return value;
+                }
+
                 return Reflect.get(...arguments);
             },
             set(target) {

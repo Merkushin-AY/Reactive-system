@@ -1,7 +1,7 @@
 import ReactiveSystem from './src/ReactiveSystem.js';
 
 // === Simple references and computed ===
-console.log('Simple references and computed');
+console.log('=== Simple references and computed ===');
 const rs = new ReactiveSystem();
 
 const price = rs.ref(10);
@@ -23,7 +23,7 @@ console.log(totalPrice.value, finalPrice.value); // 40, 20 (finalPrice logs last
 
 
 // === Deep computed objects ===
-console.log('Deep computed objects');
+console.log('=== Deep computed objects ===');
 let someRef = rs.ref(2);
 
 const comp = rs.computed(() => {
@@ -48,7 +48,7 @@ console.log(comp.value, comp2.value); // 3, 6
 
 
 // === Reactive objects ===
-console.log('Reactive objects');
+console.log('=== Reactive objects ===');
 const goods = rs.reactive([
     { amount: 3, price: 10 }, // 30
     { amount: 2, price: 15 }, // 30
@@ -65,7 +65,6 @@ console.log(goods, totalGoodsPrice.value); // 60
 goods.push({ amount: 4, price: 5 });
 
 console.log(goods, totalGoodsPrice.value); // 80
-
 
 goods[2].amount -= 1;
 
