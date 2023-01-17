@@ -2,8 +2,9 @@ import Ref from './Ref.js';
 import Computed from './Computed.js';
 
 export default class ReactiveSystem {
-    deps = new WeakMap(); // ref to set of computed
-    computing = [];
+    deps = new WeakMap(); // [Ref | Computed]: Set<Computed | watcher>
+    computing = []; // Array<Computed | watcher>
+    triggeredWatchers = new Set(); // Set<watcher>
 
     computed(getter) {
         return this.proxy(new Computed(getter));
@@ -19,6 +20,12 @@ export default class ReactiveSystem {
 
     isComputed(ref) {
         return ref instanceof Computed;
+    }
+
+    watch(handler) {
+        this.computing.push(handler);
+        handler();
+        this.computing.pop();
     }
 
     proxy(ref) {
@@ -38,9 +45,10 @@ export default class ReactiveSystem {
 
                 return Reflect.get(...arguments);
             },
-            set(target) {
+            set(target, prop, value) {
+                const isNewValue = target[prop] !== value;
                 Reflect.set(...arguments);
-                rs.triggerDependencies(target);
+                if (isNewValue) rs.triggerDependencies(target);
                 return true;
             },
             deleteProperty(target) {
@@ -60,9 +68,17 @@ export default class ReactiveSystem {
     }
 
     triggerDependencies(ref) {
-        this.deps.get(ref)?.forEach(computed => {
-            computed.deprecate();
-            this.triggerDependencies(computed);
+        this.deps.get(ref)?.forEach(computedOrWatcher => {
+            if (this.isComputed(computedOrWatcher)) {
+                computedOrWatcher.deprecate();
+                this.triggerDependencies(computedOrWatcher);
+            } else if (typeof computedOrWatcher === 'function' && !this.triggeredWatchers.has(computedOrWatcher)) {
+                this.triggeredWatchers.add(computedOrWatcher);
+                queueMicrotask(() => {
+                    computedOrWatcher();
+                    this.triggeredWatchers.delete(computedOrWatcher);
+                });
+            }
         });
     }
 }

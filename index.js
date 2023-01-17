@@ -74,3 +74,22 @@ console.log(goods, totalGoodsPrice.value, 'not working'); // 75 - not working, r
 goods.pop();
 
 console.log(goods, totalGoodsPrice.value); // 60
+
+
+// === Watchers ===
+console.log('=== Watchers ===');
+
+const observable = rs.ref(200);
+const computedObservable = rs.computed(() => observable.value + 1000);
+
+rs.watch(() => {
+    console.log('Change observable', observable.value); // 200, 202 (first time on initialization, second after all sync changes)
+});
+
+rs.watch(() => {
+    console.log('Change observable and computed observable', computedObservable.value); // 1200, 1202
+});
+
+// two changes, but every watcher runs once after all changes because it is microtask
+observable.value++;
+observable.value++;
